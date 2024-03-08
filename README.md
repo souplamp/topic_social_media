@@ -1,4 +1,4 @@
 # MongoTest
-Code for testing Mongo DB. Similar to MongoRender repository, but this one contains DB access keys whereas MongoRender does not. 
+Code for testing Mongo DB. Similar to MongoRender repository, but this one contains Mongo DB access examples. 
 It can be used to deploy a working app which can also access a Mongo DB.
-The repository MongoTestPub is the same as this but without access keys.
+The repository MongoTest is the same but it is a working example.
