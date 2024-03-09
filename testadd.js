@@ -15,9 +15,22 @@ app.use(express.urlencoded({ extended: true }));
 
 // routes will go here
 
-// Default route:
+// Default route.
+// Provides a selection of routes to go to as links.
 app.get('/', function(req, res) {
-  var outstring = 'Starting on date: ' + Date.now();
+  var outstring = 'Default endpoint starting on date: ' + Date.now();
+  outstring += '<p><a href=\"./task1\">Go to Task 1</a>';
+  outstring += '<p><a href=\"./task2\">Go to Task 2</a>';
+  res.send(outstring);
+});
+
+app.get('/task1', function(req, res) {
+  var outstring = 'Starting Task 1 on date: ' + Date.now();
+  res.send(outstring);
+});
+
+app.get('/task2', function(req, res) {
+  var outstring = 'Starting Task 2 on date: ' + Date.now();
   res.send(outstring);
 });
 
