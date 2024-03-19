@@ -1,4 +1,3 @@
-import env from "./.env";
 const { MongoClient } = require("mongodb");
 
 // The uri string must be the connection string for the database (obtained on Atlas).
