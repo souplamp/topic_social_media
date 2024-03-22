@@ -27,7 +27,8 @@ app.get('/', function(req, res) {
   console.log(mycookies);
 
   if (JSON.stringify(mycookies) != "{}") {
-   content += "Results: " + JSON.stringify(mycookies);
+    content += "Results: " + JSON.stringify(mycookies);
+    content += "<br><a href='/print'>Print all cookies.</a><br><a href='/clear'>Clear current cookie.</a>"
   } else {
     content += "You are currently logged out! <br> Redirecting to <a href='/login'>login page</a>...";
     content += "<script>setTimeout(function(){window.location='/login';},2000)</script>" // redirect to login route
@@ -140,12 +141,12 @@ app.get('/register', async (req, res) => {
 app.get('/print', async(req, res) => {
   content = "Found -> <br>";
   content += await retrieve_database();
-  res.send(content);
+  res.send(content + "<br><a href='/clear'>Clear cookie.</a><br><a href='/'>Back to default route.</a>");
 });
 
 app.get('/clear', function(req, res) {
   res.cookie('username', '', {expires: new Date(0)});
   res.cookie('password', '', {expires: new Date(0)});
   console.log(req.cookies);
-  res.send("Active authentication cookie was cleared.");
+  res.send("Active authentication cookie was cleared. <br><a href='/print'>Print all.</a><br><a href='/'>Back to default route.</a>");
 });
