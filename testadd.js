@@ -118,7 +118,7 @@ const doc2insert = {
   name: 'Cris', 
   Description: 'This is a test', };
 // Additional fields using inputs:
-  doc2insert[req.params.inpkey]=req.params.inpval;
+  doc2insert[req.params.inpkey] = req.params.inpval;
 
 console.log("Adding: " + doc2insert);
 

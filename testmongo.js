@@ -8,7 +8,7 @@ routes:
     if so, print details
   login - login form that creates existing cookie
     if query exists, then make a new cookie
-    if it doesn't return error
+    if it doesn't return proper error msg
   register - register form that inserts record and sets cookie after validation
     set so it lasts 1 minute
 
@@ -68,23 +68,30 @@ async function query_database (query) {
   }
 }
 
+async function insert_database(query) {
+  const client = new MongoClient(uri);
+  try {
+    const database = client.db('Database');
+    const accounts = database.collection('MyStuff');
+    const doit = await accounts.insertOne(query);
+  } finally {
+    await client.close();
+  }
+}
+
 app.get('/login', async (req, res) => {
   result = await query_database(req.query);
   content = "";
 
-  // do we need a case for already valid cookie?
-
   if (JSON.stringify(result) != "null") {
 
-    content += JSON.stringify(result.username + " | " + result.password);
+    //content += JSON.stringify(result.username + " | " + result.password);
     res.cookie('username', result.username, {maxAge : 20000});
     res.cookie('password', result.password, {maxAge : 20000});
 
     content += "Valid login! Redirecting..";
     content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to login
     res.send(content);
-
-    // redirect to main page.. with our now cookie!
 
   } else {
     missing_keys = (!("username" in req.query) || !("password" in req.query));
@@ -96,9 +103,42 @@ app.get('/login', async (req, res) => {
     }
   }
 
-  res.render("login", { bigchunkus: content });
+  res.render("login", { insert: content });
   
 });
+
+app.get('/register', async (req, res) => {
+  content = "";
+
+  missing_keys = (!("username" in req.query) || !("password" in req.query));
+  empty_values = (req.query.username == "" || req.query.password == "");
+
+  if (!missing_keys && empty_values) {
+    content += "Missing registration information!";
+  } else if (!missing_keys && !empty_values) {
+    const registration = {
+      username: req.query.username,
+      password: req.query.password
+    };
+    console.log(JSON.stringify(registration));
+    insert_database(registration);
+  }
+
+  res.render("register", { insert: content });
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
 
 app.get('/set', function(req, res) {
   res.cookie('name', 'value', {maxAge : 20000});
