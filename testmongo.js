@@ -17,7 +17,7 @@ routes:
 
 // The uri string must be the connection string for the database (obtained on Atlas).
 
-const uri = "mongodb+srv://<user>:<password>@cluster0.6k7ugaa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://<user>:<[password]>@cluster0.6k7ugaa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // --- This is the standard stuff to get it to work on the browser
 const cookieParser = require('cookie-parser');
@@ -55,8 +55,7 @@ app.get('/', function(req, res) {
 
 });
 
-
-
+/*
 const asyncFunc = () => {
   return new Promise((resolve) => {
     setTimeout(() => resolve("Hello World!"), 1000)
@@ -67,31 +66,33 @@ app.get('/', async (req, res) => {
   const result = await asyncFunc()
   return res.send(result)
 })
+*/
 
-const query_database = (query) => {
+async function query_database (query) {
   content = "";
   const client = new MongoClient(uri);
-  async function run() {
-    try {
-      const database = client.db('Database');
-      const users = database.collection('MyStuff');
-      const q = { username: query.username, password: query.password };
-      const result = await users.findOne(q);
-      content = result;
-      console.log(content);
-    } finally {
-      await client.close();
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(content), 1000);
-      })
-    }
+  try {
+    const database = client.db('Database');
+    const users = database.collection('MyStuff');
+    const q = { username: query.username, password: query.password };
+    const result = await users.findOne(q);
+    content = result;
+    console.log(content);
+  } finally {
+    await client.close();
+    
+    return content;
+    console.log(content);
+    //return new Promise((resolve) => {
+    //  setTimeout(() => resolve(content), 1000);
+    //})
   }
-  run().catch(console.dir);
 }
 
 app.get('/login', async (req, res) => {
   //stringified_query = JSON.stringify(req.query);
-  content = await query_database(req.query);
+  //const content = await JSON.stringify(query_database(req.query));
+  content = JSON.stringify(await query_database(req.query))
   res.render("login", { bigchunkus: content });
 });
 
