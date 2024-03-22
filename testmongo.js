@@ -1,22 +1,7 @@
 const { MongoClient } = require("mongodb");
 
-/*
+const uri = "mongodb+srv://guest:guest@cluster0.6k7ugaa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-routes:
-  default - check for cookie
-    if none, go to login
-    if so, print details
-  login - login form that creates existing cookie
-    if query exists, then make a new cookie
-    if it doesn't return proper error msg
-  register - register form that inserts record and sets cookie after validation
-    set so it lasts 1 minute
-
-*/
-
-const uri = "mongodb+srv://<user>:<password>@cluster0.6k7ugaa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-// --- This is the standard stuff to get it to work on the browser
 const cookieParser = require('cookie-parser');
 const express = require('express');
 
@@ -29,7 +14,7 @@ app.set('view engine', 'ejs');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // need this to show cookies
+app.use(cookieParser());
 
 // ROUTES //
 
@@ -41,16 +26,33 @@ app.get('/', function(req, res) {
 
   console.log(mycookies);
 
-  if (JSON.stringify(mycookies) != "{}") { // is it empty?
+  if (JSON.stringify(mycookies) != "{}") {
    content += "Results: " + JSON.stringify(mycookies);
   } else {
     content += "You are currently logged out! <br> Redirecting to <a href='/login'>login page</a>...";
-    content += "<script>setTimeout(function(){window.location='/login';},500)</script>" // redirect to login
+    content += "<script>setTimeout(function(){window.location='/login';},2000)</script>" // redirect to login route
   }
 
   res.send(content);
 
 });
+
+async function retrieve_database() {
+  all = "";
+  const client = new MongoClient(uri);
+  try {
+    const database = client.db("Database");
+    const d = database.collection("MyStuff");
+    const query = { };
+    const cursor = d.find(query);
+    for await (const doc of cursor) {
+      all += doc.username + " | " + doc.password + "<br>";
+    }
+  } finally {
+    await client.close();
+    return all;
+  }
+}
 
 async function query_database (query) {
   content = "";
@@ -85,12 +87,11 @@ app.get('/login', async (req, res) => {
 
   if (JSON.stringify(result) != "null") {
 
-    //content += JSON.stringify(result.username + " | " + result.password);
     res.cookie('username', result.username, {maxAge : 20000});
     res.cookie('password', result.password, {maxAge : 20000});
 
     content += "Valid login! Redirecting..";
-    content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to login
+    content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to default route
     res.send(content);
 
   } else {
@@ -122,73 +123,29 @@ app.get('/register', async (req, res) => {
     };
     console.log(JSON.stringify(registration));
     insert_database(registration);
+    res.cookie('username', req.query.username, {maxAge : 20000});
+    res.cookie('password', req.query.password, {maxAge : 20000});
+
+    content += "Registration accepted! Redirecting..";
+    content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to default reoute
+    res.send(content);
+
   }
 
   res.render("register", { insert: content });
 
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-app.get('/set', function(req, res) {
-  res.cookie('name', 'value', {maxAge : 20000});
-  res.render("sam");
+// interpretting "show all cookies" as meaning all database info
+app.get('/print', async(req, res) => {
+  content = "Found -> <br>";
+  content += await retrieve_database();
+  res.send(content);
 });
 
-app.get('/show', function(req, res) {
-  mycookies = req.cookies;
-  res.send("here: ", mycookies);
-});
-
-
-
-
-
-
-
-
-
-
-
-app.get('/say/:name', function(req, res) {
-  res.send('Hello ' + req.params.name + '!');
-});
-
-
-// Route to access database:
-app.get('/api/mongo/:item', function(req, res) {
-const client = new MongoClient(uri);
-const searchKey = "{ partID: '" + req.params.item + "' }";
-console.log("Looking for: " + searchKey);
-
-async function run() {
-  try {
-    const database = client.db('ckmdb');
-    const parts = database.collection('cmps415');
-
-    // Hardwired Query for a part that has partID '12345'
-    // const query = { partID: '12345' };
-    // But we will use the parameter provided with the route
-    const query = { partID: req.params.item };
-
-    const part = await parts.findOne(query);
-    console.log(part);
-    res.send('Found this: ' + JSON.stringify(part));  //Use stringify to print a json
-
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
-}
-run().catch(console.dir);
+app.get('/clear', function(req, res) {
+  res.cookie('username', '', {expires: new Date(0)});
+  res.cookie('password', '', {expires: new Date(0)});
+  console.log(req.cookies);
+  res.send("Active authentication cookie was cleared.");
 });
