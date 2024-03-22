@@ -7,17 +7,14 @@ routes:
     if none, go to login
     if so, print details
   login - login form that creates existing cookie
-    set so it lasts 1 minute
+    if query exists, then make a new cookie
+    if it doesn't return error
   register - register form that inserts record and sets cookie after validation
     set so it lasts 1 minute
 
-  (_) create form for login page
-
 */
 
-// The uri string must be the connection string for the database (obtained on Atlas).
-
-const uri = "mongodb+srv://<user>:<[password]>@cluster0.6k7ugaa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://<user>:<password>@cluster0.6k7ugaa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // --- This is the standard stuff to get it to work on the browser
 const cookieParser = require('cookie-parser');
@@ -47,26 +44,13 @@ app.get('/', function(req, res) {
   if (JSON.stringify(mycookies) != "{}") { // is it empty?
    content += "Results: " + JSON.stringify(mycookies);
   } else {
-    content += "NO RESULTS! <br> Redirecting to <a href='/login'>login page</a>...";
-    content += "<script>setTimeout(function(){window.location='/login';},2000)</script>" // redirect to login
+    content += "You are currently logged out! <br> Redirecting to <a href='/login'>login page</a>...";
+    content += "<script>setTimeout(function(){window.location='/login';},500)</script>" // redirect to login
   }
 
   res.send(content);
 
 });
-
-/*
-const asyncFunc = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve("Hello World!"), 1000)
-  })
-}
-
-app.get('/', async (req, res) => {
-  const result = await asyncFunc()
-  return res.send(result)
-})
-*/
 
 async function query_database (query) {
   content = "";
@@ -80,60 +64,44 @@ async function query_database (query) {
     console.log(content);
   } finally {
     await client.close();
-    
     return content;
-    console.log(content);
-    //return new Promise((resolve) => {
-    //  setTimeout(() => resolve(content), 1000);
-    //})
   }
 }
 
 app.get('/login', async (req, res) => {
-  //stringified_query = JSON.stringify(req.query);
-  //const content = await JSON.stringify(query_database(req.query));
-  content = JSON.stringify(await query_database(req.query))
-  res.render("login", { bigchunkus: content });
-});
+  result = await query_database(req.query);
+  content = "";
 
-  // run try catch block, if in database
+  // do we need a case for already valid cookie?
 
-  //res.render("login");
-//});
+  if (JSON.stringify(result) != "null") {
 
-/* use this to access teh database
+    content += JSON.stringify(result.username + " | " + result.password);
+    res.cookie('username', result.username, {maxAge : 20000});
+    res.cookie('password', result.password, {maxAge : 20000});
 
-// database access route:
-app.get('/api/mongo/:item', function(req, res) {
-  const client = new MongoClient(uri);
+    content += "Valid login! Redirecting..";
+    content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to login
+    res.send(content);
 
-  const searchKey = "{ partID: '" + req.params.item + "' }";
-  console.log("Looking for: " + searchKey);
+    // redirect to main page.. with our now cookie!
 
-  async function run() {
-    try {
-
-      const database = client.db('Database');
-      const parts = database.collection('MyStuff');
-
-      const query = { partID: req.params.item };
-
-      const part = await parts.findOne(query);
-      console.log(part);
-      res.send('Found this: ' + JSON.stringify(part));
-
-    } finally {
-      await client.close();
+  } else {
+    missing_keys = (!("username" in req.query) || !("password" in req.query));
+    empty_values = (req.query.username == "" || req.query.password == "");
+    if (!missing_keys && empty_values) {
+      content += "Missing login information!";
+    } else if (!missing_keys && !empty_values) {
+      content += "No matching login found in database."
     }
   }
-    run().catch(console.dir);
-});
 
-*/
+  res.render("login", { bigchunkus: content });
+  
+});
 
 app.get('/set', function(req, res) {
   res.cookie('name', 'value', {maxAge : 20000});
-  //res.send("set!");
   res.render("sam");
 });
 
