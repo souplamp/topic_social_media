@@ -1,0 +1,64 @@
+<!-- https://html-css-js.com/css/generator/box-shadow/ -->
+
+<style>
+#title {
+    background-color: #008f67;
+    -webkit-box-shadow: 0px 10px 13px -7px #000000, 16px 18px 6px 5px rgba(0,0,0,0); 
+    box-shadow: 0px 10px 13px -7px #000000, 16px 18px 6px 5px rgba(0,0,0,0);
+    min-width: 250px;
+    height: 35px;
+    text-align: center;
+    font-size: 25px;
+    padding: 11;
+    color: #ffffff;
+}
+#message {
+    background-color: #007955;
+    -webkit-box-shadow: 0px 10px 13px -7px #000000, 16px 18px 6px 5px rgba(0,0,0,0); 
+    box-shadow: 0px 10px 13px -7px #000000, 16px 18px 6px 5px rgba(0,0,0,0);
+    min-height: 35px;
+    text-align: left;
+    font-size: 16px;
+    padding: 16;
+    color: #ffffff;
+}
+#author {
+    padding: 0;
+    text-decoration: underline solid rgb(68, 68, 68);
+    font-style: normal;
+    font-variant: normal;
+    text-transform: uppercase;
+}
+hr {
+    width: 50%;
+}
+</style>
+
+<% insert.forEach(insert => { %>
+
+    <% if(insert.title !== undefined) { %>
+        <div id="title"><%= insert.title %></div>
+        <hr>
+
+    <% } else if (insert.author !== undefined) { %>
+        <div id="message">
+        <div id="author"><%= insert.author %></div>
+            <br><%= insert.text %>
+        </div>
+        <hr>
+    <% } %>
+
+<% }); %>
+
+<!--<%# DICTIONARY_OBJECT.forEach(DICTIONARY_OBJECT => { %>
+<li>Hi, I'm <%#= DICTIONARY_OBJECT.attribute_1 %>. I'm <%#= DICTIONARY_OBJECT.attribute_2 %> years old.</li>
+<%# }); %>
+-->
+
+<!--
+<div id="title">season 2 spoilers of breaking bad</div>
+<hr>
+<div id="message"><div id="author">bigchungus</div><br>mike die</div>
+<hr>
+<div id="message"><div id="author">willy wonka</div><br>wtf</div>
+-->

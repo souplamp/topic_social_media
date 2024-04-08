@@ -11,7 +11,7 @@ Requirements:
 (_) In entry page (above), link to unsubscribe from already subscribed topics.
 (_) The architecture of code MUST implement MVC / Observer patterns.
 (_) Plan to use Node-Mongo and render.com.
-(_) Use Singleton for Database access.
+(X) Use Singleton for Database access.
 
 -
 
