@@ -10,6 +10,19 @@ const port = 3000;
 app.listen(port);
 console.log('Server started at http://localhost:' + port);
 
+class SingletonDatabase {
+
+  static client = new MongoClient(uri);
+  static database = this.client.db("Database");
+  
+  static get_database() { 
+    if (this.database) {
+      return this.database;
+    }
+  }
+
+}
+
 app.set('view engine', 'ejs');
 
 app.use(express.json());
@@ -40,17 +53,18 @@ app.get('/', function(req, res) {
 
 async function retrieve_database() {
   all = "";
-  const client = new MongoClient(uri);
+  //const client = new MongoClient(uri);
   try {
-    const database = client.db("Database");
-    const d = database.collection("MyStuff");
+    //const database = client.db("Database");
+    //const d = database.collection("MyStuff");
+    const d = SingletonDatabase.get_database().collection("MyStuff");
     const query = { };
     const cursor = d.find(query);
     for await (const doc of cursor) {
       all += doc.username + " | " + doc.password + "<br>";
     }
   } finally {
-    await client.close();
+    //await client.close();
     return all;
   }
 }
@@ -120,7 +134,8 @@ app.get('/register', async (req, res) => {
   } else if (!missing_keys && !empty_values) {
     const registration = {
       username: req.query.username,
-      password: req.query.password
+      password: req.query.password,
+      subscribed_topics: []
     };
     console.log(JSON.stringify(registration));
     insert_database(registration);
@@ -130,7 +145,6 @@ app.get('/register', async (req, res) => {
     content += "Registration accepted! Redirecting..";
     content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to default reoute
     res.send(content);
-
   }
 
   res.render("register", { insert: content });
@@ -149,4 +163,66 @@ app.get('/clear', function(req, res) {
   res.cookie('password', '', {expires: new Date(0)});
   console.log(req.cookies);
   res.send("Active authentication cookie was cleared. <br><a href='/print'>Print all.</a><br><a href='/'>Back to default route.</a>");
+});
+
+app.get('/insert_topic', function(req, res) {
+
+  var content = "har";
+
+  var our_title = "breaking bad season 2 spoilers";
+  var our_message = ["bigchungus", "mike die"];
+  var our_messages = [our_message];
+
+  const topic = {
+    title: our_title,
+    messages: our_messages
+  };
+
+  console.log(JSON.stringify(topic));
+  insert_database(topic);
+
+  res.send(content);
+
+});
+
+async function subscribe_user(username, objectid) {
+  const client = new MongoClient(uri);
+  try {
+    const database = client.db('Database');
+    const accounts = database.collection('MyStuff');
+
+    // updateOne:
+    // target the subscribed_ids field.. we don't want to overwrite,
+    // but we do want to add one to the list.
+
+    //const doit = await accounts.replaceOne(username, objectid);
+
+    /*
+    await db.collection('inventory').updateOne(
+      { item: 'paper' },
+      {
+        $set: { 'size.uom': 'cm', status: 'P' },
+        $currentDate: { lastModified: true }
+      }
+    );
+    */
+
+  } finally {
+    await client.close();
+  }
+}
+
+app.get('/subscribe_user', function(req, res) {
+  var content = "garbar";
+
+  // how can you modify an existing entry?
+
+  subscribe_user("bigchungus", "123")
+
+  /*
+  1. all users made with "subscribed_ids" field as an array of objectids
+  2. when user subscribes to topic, add that objectid to array of subscribed_ids
+  */
+
+  res.send(content);
 });
