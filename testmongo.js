@@ -5,6 +5,7 @@ const uri = "mongodb+srv://guest:guest@cluster0.6k7ugaa.mongodb.net/?retryWrites
 
 const cookieParser = require('cookie-parser');
 const express = require('express');
+const { takeCoverage } = require("v8");
 
 const app = express();
 const port = 3000;
@@ -109,6 +110,15 @@ async function insert_database(query, collection) {
   try {
     const accounts = SingletonDatabase.get_database().collection(collection);
     const doit = await accounts.insertOne(query);
+  } finally {
+    return;
+  }
+}
+
+async function update_entry(filter, update, collection) {
+  try {
+    const records = SingletonDatabase.get_database().collection(collection);
+    const doit = await records.updateOne(filter, update);
   } finally {
     return;
   }
@@ -229,81 +239,64 @@ async function subscribe_user(username, objectid) {
   }
 }
 
-// add regex as :title([0-9]{5}) ...
 app.get('/topic/:title', async(req, res) => {
-  //res.send("title: " + req.params.title)
+  content = "";
 
   // 1. find corresponding title in database
-  //console.log(req.params.title);
-  //console.log(await find_topic({title: req.params.title}));
   var topic_info = await find_topic({title: req.params.title});
 
-  const hard_coded_for_now = [
-    {title: topic_info.title},
-    {author: topic_info.messages[0][0], text: topic_info.messages[0][1]},
-    {author: topic_info.messages[1][0], text: topic_info.messages[1][1]}
-  ]
-
-  //console.log(topic_info.messages);
-
-  // 2. wrap contents
-  // wrap the title in id=title div
-  // wrap EACH message (For loop) in id=message, nest id=author for just the author's name
-  // space everything with hr after each entry
-
-  // topic_info = {title: string, messages: array[0-any]..} each message is array size 2, first is author, second is message
-
-  //var content = "";
-  //content = '<div id="title">' + util.inspect(topic_info.title) + '</div><hr>'
+  // 2. gather data to insert into view
+  var data = [];
   
-  // TODO: filter out quotation marks.. convert object straight.
-  //for (message in topic_info.messages) {
+  t = util.inspect(topic_info.title);
+  t = t.substring(1, t.length - 1);
 
-  //  author = util.inspect(topic_info.messages[message][0]);
-  //  text = util.inspect(topic_info.messages[message][1]);
+  data.push({title: t});
 
-  //  content += '<div id="message">'
-  //  content += '<div id="author">' + author + '</div><br>';
-  //  content += text + '</div><hr>';
+  for (message in topic_info.messages) {
+    a = util.inspect(topic_info.messages[message][0]);
+    t = util.inspect(topic_info.messages[message][1]);
+    a = a.substring(1, a.length - 1);
+    t = t.substring(1, t.length - 1);
+    data.push({author: a, text: t});
+  }
+
+  missing_keys = !("response" in req.query);
+  empty_values = (req.query.response == "");
+
+  if (!missing_keys && empty_values) {
+    content += "Missing response information!";
+  } else if (!missing_keys && !empty_values) {
+    var topic_messages = [];
     
-  //}
+    for (message in topic_info.messages) {
+      a = util.inspect(topic_info.messages[message][0]);
+      t = util.inspect(topic_info.messages[message][1]);
+      a = a.substring(1, a.length - 1);
+      t = t.substring(1, t.length - 1);
+      topic_messages.push([a, t]);
+    }
 
-  //console.log(content);
+    topic_messages.push(["dannygonzalez", req.query.response]);
 
-  // loop within the ejs view instead of here..
-  // so convert this for loop to just gathering all the data to insert at once.
+    // DEBUG
+    console.log(topic_messages);
 
+    update_entry({title: req.params.title}, {$set: {messages: topic_messages}}, "Topics");
 
-  // contain as so:
+    var protocol = req.protocol + "://";
+    var host = req.get('host');
+    var path = req.url.split('?')[0];
+    var url = protocol + host + path;
 
-  /*
-  const person = [{
-  name: 'Kevin',
-  age: 17,
-  canCook: true,
-  }, {
-  name: 'Gavin',
-  age: 19,
-  canCook: true,
-  }, {
-  name: 'Sean',
-  age: 10,
-  canCook: false,
-  }, {
-  name: 'Dave',
-  age: 29,
-  canCook: true,
-  }];
-  */
+    content += "Adding response to topic...";
+    content += "<script>setTimeout(function(){window.location='" + url + "';},2000)</script>" // redirect to the same topic
+    
+    res.send(content);
+  }
 
-  /* <h2>EJS Tutorial</h2>
-  <% person.forEach(person => { %>
-  <li>Hi, I'm <%= person. name %>. I'm <%= person.age %> years old.</li>
-  <% }); %>
-  */
-
-  // 3. send to view
-  res.render("topic", { insert: hard_coded_for_now });
+  // 3. render view
+  res.render("topic", { insert: data });
 
 });
 

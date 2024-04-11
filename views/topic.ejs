@@ -32,6 +32,10 @@
 hr {
     width: 50%;
 }
+#box_response {
+    width: 35%;
+    height: 25%;
+}
 </style>
 
 <% insert.forEach(insert => { %>
@@ -50,15 +54,28 @@ hr {
 
 <% }); %>
 
-<!--<%# DICTIONARY_OBJECT.forEach(DICTIONARY_OBJECT => { %>
-<li>Hi, I'm <%#= DICTIONARY_OBJECT.attribute_1 %>. I'm <%#= DICTIONARY_OBJECT.attribute_2 %> years old.</li>
-<%# }); %>
--->
-
-<!--
-<div id="title">season 2 spoilers of breaking bad</div>
-<hr>
-<div id="message"><div id="author">bigchungus</div><br>mike die</div>
-<hr>
-<div id="message"><div id="author">willy wonka</div><br>wtf</div>
--->
+<form class="form-horizontal">
+    <fieldset>
+    
+    <!-- Form Name -->
+    <legend>Add message to topic.</legend>
+    
+    <!-- Textarea -->
+    <div class="form-group">
+      <label class="col-md-4 control-label" for="response"></label>
+      <div class="col-md-4">                     
+        <textarea id="box_response" class="form-control" id="response" name="response"></textarea>
+      </div>
+    </div>
+    
+    <!-- Button -->
+    <div class="form-group">
+      <label class="col-md-4 control-label" for="post"></label>
+      <div class="col-md-4">
+        <button id="post" name="post" class="btn btn-primary">Post</button>
+      </div>
+    </div>
+    
+    </fieldset>
+    </form>
+    

@@ -3,6 +3,7 @@
 Requirements:
 (X) Person may register account with service (use prev. assignment).
 (X) System maintains topics (message threads).
+(X) Topics are viewable.
 (_) User can subscribe to topic.
 (_) User can start new topic (subscribe them to said topic).
 (_) User can post message in subscribed topic.
@@ -12,6 +13,38 @@ Requirements:
 (_) The architecture of code MUST implement MVC / Observer patterns.
 (_) Plan to use Node-Mongo and render.com.
 (X) Use Singleton for Database access.
+
+-
+
+REMAINING NOTES:
+- User can subscribe to topic.
+  > Have to update existing entry in database. Look at current authentication cookie.
+  > Of course, add button to start this behavior.
+
+- User can start new topic (subscribe them to said topic).
+  > Add button on some page.. And make that "some page" which shows all topics.
+  > Starting topic triggers code in requirement above.
+
+- User can post message in subscribed topic.
+  > Double check wording of this one..
+  > Could add verbatim and get his input on functionality.
+
+- Upon logic, user can see 2 most recent messages posted in each subscribed topic.
+  > We need a subscribed page to show all the topics one is subscribed to.
+
+- In entry page (above), link to show all topics.
+  > What is entry page?
+
+- In entry page (above), link to unsubscribe from already subscribed topics.
+  > Makes sense.
+
+- The architecture of code MUST implement MVC / Observer patterns.
+  > MVC. M = MongoDB, V = Views, C = testmongo.js (rename to controller?)
+  > Observer has not been implemented yet.. Can do a page refresh when new messages are added to a topic?
+  > Save Observer for last and see how people are using it.
+
+- Plan to use Node-Mongo and render.com.
+  > Hopefully will work when all is said and done. Finally incorporate Environment variables, and push to github to publish.
 
 -
 
