@@ -3,69 +3,22 @@
 Requirements:
 (X) Person may register account with service (use prev. assignment).
 (X) System maintains topics (message threads).
+(X) User can start new topic
+(X) User can post message in a topic.
 (X) Topics are viewable.
-(_) User can subscribe to topic.
-(_) User can start new topic (subscribe them to said topic).
-(_) User can post message in subscribed topic.
+(X) Use Singleton for Database access.
+(X) User can subscribe to topic.
+(X) Add button on topic to allow User to subscribe.
+(X) Subscribe Users to their created topics.
 (_) Upon logic, user can see 2 most recent messages posted in each subscribed topic.
 (_) In entry page (above), link to show all topics.
 (_) In entry page (above), link to unsubscribe from already subscribed topics.
 (_) The architecture of code MUST implement MVC / Observer patterns.
-(_) Plan to use Node-Mongo and render.com.
-(X) Use Singleton for Database access.
+(X) Plan to use Node-Mongo
+(_) Upload to render.com
 
--
+OPTIMIZE:
+(_) Add button to subscribe instead of linked text.
+(_) Redirect on Subscription page back to topic.
 
-REMAINING NOTES:
-- User can subscribe to topic.
-  > Have to update existing entry in database. Look at current authentication cookie.
-  > Of course, add button to start this behavior.
-
-- User can start new topic (subscribe them to said topic).
-  > Add button on some page.. And make that "some page" which shows all topics.
-  > Starting topic triggers code in requirement above.
-
-- User can post message in subscribed topic.
-  > Double check wording of this one..
-  > Could add verbatim and get his input on functionality.
-
-- Upon logic, user can see 2 most recent messages posted in each subscribed topic.
-  > We need a subscribed page to show all the topics one is subscribed to.
-
-- In entry page (above), link to show all topics.
-  > What is entry page?
-
-- In entry page (above), link to unsubscribe from already subscribed topics.
-  > Makes sense.
-
-- The architecture of code MUST implement MVC / Observer patterns.
-  > MVC. M = MongoDB, V = Views, C = testmongo.js (rename to controller?)
-  > Observer has not been implemented yet.. Can do a page refresh when new messages are added to a topic?
-  > Save Observer for last and see how people are using it.
-
-- Plan to use Node-Mongo and render.com.
-  > Hopefully will work when all is said and done. Finally incorporate Environment variables, and push to github to publish.
-
--
-
-topics can be entries in the database..
-
-[TOPIC]
-handle messages as array[array[string]].
-array1 is an array of "messages", must be >= 0 in size
-array2 is a single "message", string for associated user and their message text (must be == 2 in size)
-we also have a "title" to display for the message.
-
-[USERS]
-for each user, we need to keep the ids of topics subscribed in their account.
-array[ids] <- store and add ids (objectid according to mongodb)..
-
-fyi: ObjectId('codegoeshere')
-must be wrapped like so.. but double check documentation
-
--
-
-create singleton database connection we can use to communicate.
-this instance will be able to switch collections (users, topics).
-we can use .find() to get records easily (even all records).
-we can also use updateone() to update subscriptions for users.
+-> what if you make :username which goes to an account instead..

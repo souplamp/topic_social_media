@@ -1,0 +1,61 @@
+<!-- https://html-css-js.com/css/generator/box-shadow/ -->
+
+<style>
+#demo { -webkit-box-shadow: 5px 5px 0px 0px #289FED, 10px 10px 0px 0px #5FB8FF, 15px 15px 0px 0px #A1D8FF, 20px 20px 0px 0px #CAE6FF, 25px 25px 0px 0px #E1EEFF, 5px 5px 15px 9px rgba(0,0,0,0); 
+box-shadow: 5px 5px 0px 0px #1fb780, 10px 10px 0px 0px #38e494, 15px 15px 0px 0px #9cffb0, 20px 20px 0px 0px #98ffb5, 25px 25px 0px 0px #E1EEFF, 5px 5px 15px 9px rgba(0,0,0,0);
+width: 50%;
+background-color: #357249;
+color: #FFFFFF;
+font-size: 22px;
+margin: 10 10 10 10;
+padding: 10 10 10 10;
+}
+button {
+font-size: 16px;
+}
+</style>
+
+<% insert.forEach(insert => { %>
+    <% if(insert.title !== undefined) { %>
+        <div id="demo"><%= insert.title %>
+        <br><a href="/topic/<%=insert.title%>"><button>View</button></a></div>
+    <% } %>
+<% }); %>
+
+<br><br>
+
+<form class="form-horizontal">
+    <fieldset>
+    
+    <!-- Form Name -->
+    <legend>Create a new topic.</legend>
+    
+    <!-- Text input-->
+    <div class="form-group">
+      <label class="col-md-4 control-label" for="title">Title</label>  
+      <div class="col-md-4">
+      <input id="title" name="title" type="text" placeholder="" class="form-control input-md">
+        
+      </div>
+    </div>
+    
+    <!-- Textarea -->
+    <div class="form-group">
+      <label class="col-md-4 control-label" for="message">Message</label>
+      <div class="col-md-4">                     
+        <textarea class="form-control" id="message" name="message"></textarea>
+      </div>
+    </div>
+    
+    <!-- Button -->
+    <div class="form-group">
+      <label class="col-md-4 control-label" for="singlebutton"></label>
+      <div class="col-md-4">
+        <button id="singlebutton" name="singlebutton" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+    
+    </fieldset>
+</form>    
+
+<!--<div id="demo">Breaking Bad Season 2 Spoilers<br><button>View</button></div>-->

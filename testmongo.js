@@ -1,4 +1,4 @@
-const { MongoClient } = require("mongodb");
+const { MongoClient, Double } = require("mongodb");
 const util = require('util');
 
 const uri = "mongodb+srv://guest:guest@cluster0.6k7ugaa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
@@ -28,7 +28,6 @@ class SingletonDatabase {
       return this.database;
     }
   }
-
 }
 
 app.set('view engine', 'ejs');
@@ -39,13 +38,12 @@ app.use(cookieParser());
 
 // ROUTES //
 
-app.get('/', function(req, res) {
+// (_) Upon logic, user can see 2 most recent messages posted in each subscribed topic. //
+app.get('/', function(req, res) {  
   const myquery = req.query;
 
   var mycookies = req.cookies;
   var content = "";
-
-  //console.log(mycookies);
 
   if (JSON.stringify(mycookies) != "{}") {
     content += "Results: " + JSON.stringify(mycookies);
@@ -56,8 +54,13 @@ app.get('/', function(req, res) {
   }
 
   res.send(content);
-
+  return
 });
+
+// create a 'default' page:
+// show most recent messages (2 at most) for each subscribed topics.
+// so on default route, for each topic, show title with at least zero at most two
+// after all topics have button to all topics
 
 async function retrieve_database() {
   all = "";
@@ -73,8 +76,6 @@ async function retrieve_database() {
   }
 }
 
-// TODO: future proof by sending whatever query presented in code..
-
 async function query_database (query) {
   content = "";
   try {
@@ -82,9 +83,23 @@ async function query_database (query) {
     const q = { username: query.username, password: query.password };
     const result = await users.findOne(q);
     content = result;
-    //console.log(content);
   } finally {
     return content;
+  }
+}
+
+
+async function validate_user_exists(query) {
+  try {
+    const users = SingletonDatabase.get_database().collection("Users");
+    const q = { username: query.username};
+    const result = await users.findOne(q);
+    var validation = false;
+    if (result != null) {
+      validation = true
+    }
+  } finally {
+    return validation;
   }
 }
 
@@ -101,6 +116,17 @@ async function find_topic (query) {
     r = result;
     //content = result;
     //console.log(content);
+  } finally {
+    return r;
+  }
+}
+
+async function get_all_topics() {
+  var r;
+  try {
+    const db = SingletonDatabase.get_database().collection("Topics");
+    const result = await db.find().toArray();
+    r = result;
   } finally {
     return r;
   }
@@ -126,17 +152,18 @@ async function update_entry(filter, update, collection) {
 
 app.get('/login', async (req, res) => {
   result = await query_database(req.query);
+  console.log(req.query);
   content = "";
 
   if (JSON.stringify(result) != "null") {
 
-    res.cookie('username', result.username, {maxAge : 20000});
-    res.cookie('password', result.password, {maxAge : 20000});
+    res.cookie('username', result.username, {maxAge : 100000});
+    res.cookie('password', result.password, {maxAge : 100000});
 
     content += "Valid login! Redirecting..";
     content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to default route
     res.send(content);
-
+    return
   } else {
     missing_keys = (!("username" in req.query) || !("password" in req.query));
     empty_values = (req.query.username == "" || req.query.password == "");
@@ -173,6 +200,7 @@ app.get('/register', async (req, res) => {
     content += "Registration accepted! Redirecting..";
     content += "<script>setTimeout(function(){window.location='/';},2000)</script>" // redirect to default reoute
     res.send(content);
+    return
   }
 
   res.render("register", { insert: content });
@@ -184,6 +212,7 @@ app.get('/print', async(req, res) => {
   content = "Found -> <br>";
   content += await retrieve_database();
   res.send(content + "<br><a href='/clear'>Clear cookie.</a><br><a href='/'>Back to default route.</a>");
+  return
 });
 
 app.get('/clear', function(req, res) {
@@ -191,9 +220,10 @@ app.get('/clear', function(req, res) {
   res.cookie('password', '', {expires: new Date(0)});
   //console.log(req.cookies);
   res.send("Active authentication cookie was cleared. <br><a href='/print'>Print all.</a><br><a href='/'>Back to default route.</a>");
+  return
 });
 
-app.get('/insert_topic', function(req, res) {
+/*app.get('/insert_topic', function(req, res) {
 
   var content = "har";
 
@@ -210,30 +240,17 @@ app.get('/insert_topic', function(req, res) {
   insert_database(topic, "Topics");
 
   res.send(content);
+  return
 
-});
+});*/
 
-async function subscribe_user(username, objectid) {
+async function subscribe_user(login, objectid) {
   try {
-
-    const accounts = SingletonDatabase.get_database().collection("Users");
-
-    // updateOne:
-    // target the subscribed_ids field.. we don't want to overwrite,
-    // but we do want to add one to the list.
-
-    //const doit = await accounts.replaceOne(username, objectid);
-
-    /*
-    await db.collection('inventory').updateOne(
-      { item: 'paper' },
-      {
-        $set: { 'size.uom': 'cm', status: 'P' },
-        $currentDate: { lastModified: true }
-      }
-    );
-    */
-
+    var user_info = await query_database(login);
+    var user_subscriptions = user_info.subscribed_topics;
+    await user_subscriptions.push(objectid);
+    //console.log(user_subscriptions);
+    update_entry(login, {$set: {subscribed_topics: user_subscriptions}}, "Users");
   } finally {
     return;
   }
@@ -261,14 +278,27 @@ app.get('/topic/:title', async(req, res) => {
     data.push({author: a, text: t});
   }
 
+  improper_login = !("username" in req.cookies);
   missing_keys = !("response" in req.query);
   empty_values = (req.query.response == "");
 
-  if (!missing_keys && empty_values) {
-    content += "Missing response information!";
-  } else if (!missing_keys && !empty_values) {
+  if (!missing_keys && !empty_values) {
+
+    var protocol = req.protocol + "://";
+    var host = req.get('host');
+    var path = req.url.split('?')[0];
+    var url = protocol + host + path;
+
+    // TODO: render this on top of the render as an insert instead.. would look better?
+    // or use javascript to UNHIDE an element that says such. this would be waaay better.
+    if (improper_login) {
+      content += "You are not currently logged in.<br><a href='" + url + "'>Click here to go back to the topic.</a>";
+      res.send(content);
+      return
+    }
+
     var topic_messages = [];
-    
+
     for (message in topic_info.messages) {
       a = util.inspect(topic_info.messages[message][0]);
       t = util.inspect(topic_info.messages[message][1]);
@@ -277,22 +307,18 @@ app.get('/topic/:title', async(req, res) => {
       topic_messages.push([a, t]);
     }
 
-    topic_messages.push(["dannygonzalez", req.query.response]);
+    topic_messages.push([req.cookies.username, req.query.response]);
 
     // DEBUG
-    console.log(topic_messages);
+    // console.log(topic_messages);
 
     update_entry({title: req.params.title}, {$set: {messages: topic_messages}}, "Topics");
-
-    var protocol = req.protocol + "://";
-    var host = req.get('host');
-    var path = req.url.split('?')[0];
-    var url = protocol + host + path;
 
     content += "Adding response to topic...";
     content += "<script>setTimeout(function(){window.location='" + url + "';},2000)</script>" // redirect to the same topic
     
     res.send(content);
+    return;
   }
 
   // 3. render view
@@ -300,17 +326,96 @@ app.get('/topic/:title', async(req, res) => {
 
 });
 
-app.get('/subscribe_user', function(req, res) {
-  var content = "garbar";
 
-  // how can you modify an existing entry?
+app.get('/user/:username', async(req, res) => {
+  var validation = await validate_user_exists({username: req.params.username});
 
-  subscribe_user("bigchungus", "123")
+  if (validation == false) {
+    res.send("Username not valid.");
+    return;
+  }
 
-  /*
-  1. all users made with "subscribed_ids" field as an array of objectids
-  2. when user subscribes to topic, add that objectid to array of subscribed_ids
-  */
+  // 2. display all subscribed topics
+  // we'll do this using user.ejs, copy of list.ejs but modified to show messages
+  // that's done through render so..
 
+  // 3. all topics must have title and two recent messages (at most)
+  // let's get all topics in the subscribe list with a query, then get their top two messages.
+  // get the array of subscribe_topic titles
+
+
+  res.send(req.params.username);
+});
+
+app.get('/subscribe/:title', function(req, res) {
+  content = "";
+
+  improper_login = (!("username" in req.cookies) || !("password" in req.cookies));
+
+  if (improper_login) {
+    res.send("No login found..");
+    return;
+  }
+
+  subscribe_user(req.cookies, req.params.title);
+  content = "subscription to topic successful!" + " " + req.params.title;
+  // redirect to said topic with js.
   res.send(content);
+  return;
+
+});
+
+app.get('/list', async(req, res) => {
+
+  var content = "";
+
+  var topics = await get_all_topics();
+  var data = [];
+
+  for (topic in topics) {
+    t = topics[topic].title;
+    data.push({title: t});
+  }
+
+  // ?title=a&message=b&singlebutton=
+  // console.log(req.query);
+
+  improper_login = !("username" in req.cookies);
+  missing_keys = (!("title" in req.query) || !("message" in req.query));
+  empty_values = (req.query.title == "" || req.query.message == "");
+
+  if (!missing_keys && !empty_values) {
+
+    var protocol = req.protocol + "://";
+    var host = req.get('host');
+    var path = req.url.split('?')[0];
+    var url = protocol + host + path;
+
+    // TODO: render this on top of the render as an insert instead.. would look better?
+    // or use javascript to UNHIDE an element that says such. this would be waaay better.
+    if (improper_login) {
+      content += "You are not currently logged in.<br><a href='" + url + "'>Click here to go back to the topics list.</a>";
+      res.send(content);
+      return
+    }
+
+    const topic = {
+      title: req.query.title,
+      messages: [[req.cookies.username, req.query.message]]
+    };
+
+    insert_database(topic, "Topics");
+    subscribe_user(req.cookies, topic.title);
+
+    content += "Creating topic...";
+    content += "<script>setTimeout(function(){window.location='" + url + "';},2000)</script>" // redirect to the same topic
+    // to change this make it subscribe instead, or just call the subscribe function?
+    
+    res.send(content);
+    return
+  }
+
+  res.render("list", {insert: data});
+  return
+
 });

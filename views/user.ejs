@@ -1,0 +1,27 @@
+<!-- https://html-css-js.com/css/generator/box-shadow/ -->
+
+<style>
+#demo { -webkit-box-shadow: 5px 5px 0px 0px #289FED, 10px 10px 0px 0px #5FB8FF, 15px 15px 0px 0px #A1D8FF, 20px 20px 0px 0px #CAE6FF, 25px 25px 0px 0px #E1EEFF, 5px 5px 15px 9px rgba(0,0,0,0); 
+box-shadow: 5px 5px 0px 0px #1fb780, 10px 10px 0px 0px #38e494, 15px 15px 0px 0px #9cffb0, 20px 20px 0px 0px #98ffb5, 25px 25px 0px 0px #E1EEFF, 5px 5px 15px 9px rgba(0,0,0,0);
+width: 50%;
+background-color: #357249;
+color: #FFFFFF;
+font-size: 22px;
+margin: 10 10 10 10;
+padding: 10 10 10 10;
+}
+button {
+font-size: 16px;
+}
+</style>
+
+<!-- insert each title and the most recent two messages, if any (0-2) -->
+
+<% insert.forEach(insert => { %>
+    <% if(insert.title !== undefined) { %>
+        <div id="demo"><%= insert.title %>
+        <br><a href="/topic/<%=insert.title%>"><button>View</button></a></div>
+    <% } %>
+<% }); %>
+
+<br><br>
