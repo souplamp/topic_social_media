@@ -83,11 +83,11 @@ hr {
     <fieldset>
     <div class="control-group">
       <div class="controls">
-        <a href="/subscribe/<%insert.forEach(insert=>{%><%if(insert.title!==undefined){%><%=insert.title%><%}%><%});%>">Subscribe</a></div>
+        <a href="/<%insert.forEach(insert=>{%><%if(insert.is_subscribed==true){%>un<%}%><%});%>subscribe/<%insert.forEach(insert=>{%><%if(insert.title!==undefined){%><%=insert.title%><%}%><%});%>"><%insert.forEach(insert=>{%><%if(insert.is_subscribed==true){%>un<%}%><%});%>subscribe</a></div>
         <!-- this may work -->
       </div>
     </div>
     </fieldset>
 </form>
-    
+
     

@@ -46,8 +46,10 @@ app.get('/', function(req, res) {
   var content = "";
 
   if (JSON.stringify(mycookies) != "{}") {
+    var username = util.inspect(mycookies.username);
+    username = username.substring(1, username.length - 1);
     content += "Results: " + JSON.stringify(mycookies);
-    content += "<br><a href='/print'>Print all cookies.</a><br><a href='/clear'>Clear current cookie.</a>"
+    content += "<br><a href='/print'>Print all cookies.</a><br><a href='/clear'>Clear current cookie.</a><br><br><a href='/list'>See all topics.</a><br><a href='/user/" + username + "'>See subscribed messages.</a>"
   } else {
     content += "You are currently logged out! <br> Redirecting to <a href='/login'>login page</a>...";
     content += "<script>setTimeout(function(){window.location='/login';},2000)</script>" // redirect to login route
@@ -56,11 +58,6 @@ app.get('/', function(req, res) {
   res.send(content);
   return
 });
-
-// create a 'default' page:
-// show most recent messages (2 at most) for each subscribed topics.
-// so on default route, for each topic, show title with at least zero at most two
-// after all topics have button to all topics
 
 async function retrieve_database() {
   all = "";
@@ -115,20 +112,15 @@ async function get_subscribed_topics(query) {
   }
 }
 
-
-// TODO: future proof by sending whatever query presented in code..
-// note big diff: below returns dictionary, not a string
-
 async function find_topic (query) {
   var r;
-  //content = "";
+  
   try {
     const records = SingletonDatabase.get_database().collection("Topics");
     const q = { title: query.title };
     const result = await records.findOne(q);
     r = result;
-    //content = result;
-    //console.log(content);
+    
   } finally {
     return r;
   }
@@ -204,7 +196,7 @@ app.get('/register', async (req, res) => {
       password: req.query.password,
       subscribed_topics: []
     };
-    //console.log(JSON.stringify(registration));
+    
     insert_database(registration, "Users");
     res.cookie('username', req.query.username, {maxAge : 20000});
     res.cookie('password', req.query.password, {maxAge : 20000});
@@ -230,17 +222,60 @@ app.get('/print', async(req, res) => {
 app.get('/clear', function(req, res) {
   res.cookie('username', '', {expires: new Date(0)});
   res.cookie('password', '', {expires: new Date(0)});
-  //console.log(req.cookies);
+  
   res.send("Active authentication cookie was cleared. <br><a href='/print'>Print all.</a><br><a href='/'>Back to default route.</a>");
   return
 });
+
+async function check_user_subscription(login, objectid) {
+  var boolean = false;
+  try {
+    var user_info = await query_database(login);
+    var user_subscriptions = user_info.subscribed_topics;
+
+    user_subscriptions.forEach(subscribed_topic => {
+      if (subscribed_topic == objectid) {
+        
+        boolean = true;
+      }
+    });
+
+  } finally {
+    return boolean;
+  }
+}
 
 async function subscribe_user(login, objectid) {
   try {
     var user_info = await query_database(login);
     var user_subscriptions = user_info.subscribed_topics;
     await user_subscriptions.push(objectid);
-    //console.log(user_subscriptions);
+    
+    update_entry(login, {$set: {subscribed_topics: user_subscriptions}}, "Users");
+  } finally {
+    return;
+  }
+}
+
+async function unsubscribe_user(login, objectid) {
+  try {
+    var user_info = await query_database(login);
+    var user_subscriptions = user_info.subscribed_topics;
+
+    var index = -1;
+    var i = 0;
+
+    user_subscriptions.forEach(subscribed_topic => {
+      if (subscribed_topic == objectid) {
+        index = i;
+      }
+      i += 1;
+    });
+
+    if (index != -1) {
+      await user_subscriptions.splice(index, 1);
+    }
+
     update_entry(login, {$set: {subscribed_topics: user_subscriptions}}, "Users");
   } finally {
     return;
@@ -280,8 +315,6 @@ app.get('/topic/:title', async(req, res) => {
     var path = req.url.split('?')[0];
     var url = protocol + host + path;
 
-    // TODO: render this on top of the render as an insert instead.. would look better?
-    // or use javascript to UNHIDE an element that says such. this would be waaay better.
     if (improper_login) {
       content += "You are not currently logged in.<br><a href='" + url + "'>Click here to go back to the topic.</a>";
       res.send(content);
@@ -307,6 +340,11 @@ app.get('/topic/:title', async(req, res) => {
     
     res.send(content);
     return;
+  }
+
+  if (!improper_login) {
+    var is_subscribed = await check_user_subscription(req.cookies, topic_info.title);
+    data.push({is_subscribed: is_subscribed})
   }
 
   // 3. render view
@@ -370,7 +408,24 @@ app.get('/subscribe/:title', function(req, res) {
   subscribe_user(req.cookies, req.params.title);
   content = "subscription to topic successful!" + " " + req.params.title;
   
-  // redirect to said topic with js.
+  res.send(content);
+  return;
+
+});
+
+app.get('/unsubscribe/:title', function(req, res) {
+  content = "";
+
+  improper_login = (!("username" in req.cookies) || !("password" in req.cookies));
+
+  if (improper_login) {
+    res.send("No login found..");
+    return;
+  }
+
+  unsubscribe_user(req.cookies, req.params.title);
+  content = "unsubscription to topic successful!" + " " + req.params.title;
+  
   res.send(content);
   return;
 
@@ -388,9 +443,6 @@ app.get('/list', async(req, res) => {
     data.push({title: t});
   }
 
-  // ?title=a&message=b&singlebutton=
-  // console.log(req.query);
-
   improper_login = !("username" in req.cookies);
   missing_keys = (!("title" in req.query) || !("message" in req.query));
   empty_values = (req.query.title == "" || req.query.message == "");
@@ -402,8 +454,6 @@ app.get('/list', async(req, res) => {
     var path = req.url.split('?')[0];
     var url = protocol + host + path;
 
-    // TODO: render this on top of the render as an insert instead.. would look better?
-    // or use javascript to UNHIDE an element that says such. this would be waaay better.
     if (improper_login) {
       content += "You are not currently logged in.<br><a href='" + url + "'>Click here to go back to the topics list.</a>";
       res.send(content);
@@ -419,8 +469,7 @@ app.get('/list', async(req, res) => {
     subscribe_user(req.cookies, topic.title);
 
     content += "Creating topic...";
-    content += "<script>setTimeout(function(){window.location='" + url + "';},2000)</script>" // redirect to the same topic
-    // to change this make it subscribe instead, or just call the subscribe function?
+    content += "<script>setTimeout(function(){window.location='" + url + "';},2000)</script>"
     
     res.send(content);
     return

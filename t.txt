@@ -11,14 +11,16 @@ Requirements:
 (X) Add button on topic to allow User to subscribe.
 (X) Subscribe Users to their created topics.
 (X) Upon logic, user can see 2 most recent messages posted in each subscribed topic.
-(_) In entry page (above), link to show all topics.
-(_) In entry page (above), link to unsubscribe from already subscribed topics.
-(_) The architecture of code MUST implement MVC / Observer patterns.
+(X) In entry page (above), link to show all topics.
+(X) In entry page (above), link to unsubscribe from already subscribed topics.
+(X) Make 'subscribe' turn into 'unsubscribe'
 (X) Plan to use Node-Mongo
+(X) Use MVC
+(_) Use Observer
 (_) Upload to render.com
 
-OPTIMIZE:
+STILL TODO:
 (_) Add button to subscribe instead of linked text.
 (_) Redirect on Subscription page back to topic.
-
--> what if you make :username which goes to an account instead..
+(_) Observer?? excuse
+(_) Report
