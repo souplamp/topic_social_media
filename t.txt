@@ -10,7 +10,7 @@ Requirements:
 (X) User can subscribe to topic.
 (X) Add button on topic to allow User to subscribe.
 (X) Subscribe Users to their created topics.
-(_) Upon logic, user can see 2 most recent messages posted in each subscribed topic.
+(X) Upon logic, user can see 2 most recent messages posted in each subscribed topic.
 (_) In entry page (above), link to show all topics.
 (_) In entry page (above), link to unsubscribe from already subscribed topics.
 (_) The architecture of code MUST implement MVC / Observer patterns.

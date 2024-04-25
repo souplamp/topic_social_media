@@ -13,15 +13,48 @@ padding: 10 10 10 10;
 button {
 font-size: 16px;
 }
+#message {
+    background-color: #007955;
+    -webkit-box-shadow: 0px 10px 13px -7px #000000, 16px 18px 6px 5px rgba(0,0,0,0); 
+    box-shadow: 0px 10px 13px -7px #000000, 16px 18px 6px 5px rgba(0,0,0,0);
+    min-height: 35px;
+    text-align: left;
+    font-size: 16px;
+    padding: 16;
+    color: #ffffff;
+}
+#author {
+    padding: 0;
+    text-decoration: underline solid rgb(68, 68, 68);
+    font-style: normal;
+    font-variant: normal;
+    text-transform: uppercase;
+}
 </style>
 
 <!-- insert each title and the most recent two messages, if any (0-2) -->
 
 <% insert.forEach(insert => { %>
-    <% if(insert.title !== undefined) { %>
-        <div id="demo"><%= insert.title %>
-        <br><a href="/topic/<%=insert.title%>"><button>View</button></a></div>
-    <% } %>
-<% }); %>
 
-<br><br>
+    <% if(insert.title !== undefined) { %>
+        <div id="title"><%= insert.title %></div>
+        <hr>
+    <% } %>
+
+    <% if (insert.next_to_last_author !== undefined) { %>
+        <div id="message">
+        <div id="author"><%= insert.next_to_last_author %></div>
+            <br><%= insert.next_to_last_text %>
+        </div>
+        <hr>
+    <% } %>
+
+    <% if (insert.the_last_author !== undefined) { %>
+        <div id="message">
+        <div id="author"><%= insert.the_last_author %></div>
+            <br><%= insert.the_last_text %>
+        </div>
+        <hr>
+    <% } %>
+
+<% }); %>

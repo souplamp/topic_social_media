@@ -88,7 +88,6 @@ async function query_database (query) {
   }
 }
 
-
 async function validate_user_exists(query) {
   try {
     const users = SingletonDatabase.get_database().collection("Users");
@@ -102,6 +101,20 @@ async function validate_user_exists(query) {
     return validation;
   }
 }
+
+async function get_subscribed_topics(query) {
+  content = "";
+  try {
+    const users = SingletonDatabase.get_database().collection("Users");
+    const q = { username: query.username };
+    const result = await users.findOne(q);
+    const topics = result.subscribed_topics;
+    content = topics;
+  } finally {
+    return content;
+  }
+}
+
 
 // TODO: future proof by sending whatever query presented in code..
 // note big diff: below returns dictionary, not a string
@@ -152,7 +165,6 @@ async function update_entry(filter, update, collection) {
 
 app.get('/login', async (req, res) => {
   result = await query_database(req.query);
-  console.log(req.query);
   content = "";
 
   if (JSON.stringify(result) != "null") {
@@ -223,27 +235,6 @@ app.get('/clear', function(req, res) {
   return
 });
 
-/*app.get('/insert_topic', function(req, res) {
-
-  var content = "har";
-
-  var our_title = "123";
-  var our_message = ["bigchungus", "123"];
-  var our_messages = [our_message];
-
-  const topic = {
-    title: our_title,
-    messages: our_messages
-  };
-
-  //console.log(JSON.stringify(topic));
-  insert_database(topic, "Topics");
-
-  res.send(content);
-  return
-
-});*/
-
 async function subscribe_user(login, objectid) {
   try {
     var user_info = await query_database(login);
@@ -309,9 +300,6 @@ app.get('/topic/:title', async(req, res) => {
 
     topic_messages.push([req.cookies.username, req.query.response]);
 
-    // DEBUG
-    // console.log(topic_messages);
-
     update_entry({title: req.params.title}, {$set: {messages: topic_messages}}, "Topics");
 
     content += "Adding response to topic...";
@@ -326,7 +314,6 @@ app.get('/topic/:title', async(req, res) => {
 
 });
 
-
 app.get('/user/:username', async(req, res) => {
   var validation = await validate_user_exists({username: req.params.username});
 
@@ -335,16 +322,39 @@ app.get('/user/:username', async(req, res) => {
     return;
   }
 
-  // 2. display all subscribed topics
-  // we'll do this using user.ejs, copy of list.ejs but modified to show messages
-  // that's done through render so..
+  var subscribed_topic_titles = await get_subscribed_topics({username: req.params.username});
+  var to_display = [];
 
-  // 3. all topics must have title and two recent messages (at most)
-  // let's get all topics in the subscribe list with a query, then get their top two messages.
-  // get the array of subscribe_topic titles
+  // with the array of subscribed_topic titles, iterate through each one
+  for (title of subscribed_topic_titles) {
 
+    // with each title, get that topic
+    var topic = await find_topic({title: title});
 
-  res.send(req.params.username);
+    // collect the LAST two (if any) of messages posted (1-2).
+    var messages = await topic.messages;
+
+    // info to render
+    var insert = {};
+    insert.title = title;
+
+    var next_to_last = messages[messages.length - 2];
+    if (next_to_last != undefined) {
+      insert.next_to_last_author = next_to_last[0];
+      insert.next_to_last_text = next_to_last[1];
+    }
+
+    var the_last = messages[messages.length - 1];
+    insert.the_last_author = the_last[0];
+    insert.the_last_text = the_last[1];
+    
+    to_display.push(insert);
+    
+  };
+
+  res.render("user", { insert: to_display });
+  return;
+
 });
 
 app.get('/subscribe/:title', function(req, res) {
@@ -359,6 +369,7 @@ app.get('/subscribe/:title', function(req, res) {
 
   subscribe_user(req.cookies, req.params.title);
   content = "subscription to topic successful!" + " " + req.params.title;
+  
   // redirect to said topic with js.
   res.send(content);
   return;
