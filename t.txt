@@ -16,11 +16,6 @@ Requirements:
 (X) Make 'subscribe' turn into 'unsubscribe'
 (X) Plan to use Node-Mongo
 (X) Use MVC
-(_) Use Observer
+(X) Use Observer
 (_) Upload to render.com
-
-STILL TODO:
-(_) Add button to subscribe instead of linked text.
-(_) Redirect on Subscription page back to topic.
-(_) Observer?? excuse
 (_) Report

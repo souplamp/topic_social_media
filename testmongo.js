@@ -12,10 +12,6 @@ const port = 3000;
 app.listen(port);
 console.log('Server started at http://localhost:' + port);
 
-// ideas for observer:
-// subscribe the database instance to the updates?
-// may need more objects.. it'll fit in here somewhere.
-
 class SingletonDatabase {
 
   // start client only once. //
@@ -38,7 +34,6 @@ app.use(cookieParser());
 
 // ROUTES //
 
-// (_) Upon logic, user can see 2 most recent messages posted in each subscribed topic. //
 app.get('/', function(req, res) {  
   const myquery = req.query;
 
